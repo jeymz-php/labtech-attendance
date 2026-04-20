@@ -138,6 +138,15 @@
         .btn-view    { background: var(--white); color: var(--text-mid); border: 1.5px solid #e0e0e0; border-radius: 6px; padding: 5px 10px; font-family: inherit; font-size: 12px; cursor: pointer; }
         .btn-view:hover    { border-color: var(--green-border); color: var(--green-main); }
         .btn-approve svg, .btn-reject svg { width: 11px; height: 11px; }
+        .btn-revert {
+            background: var(--white); color: var(--orange);
+            border: 1.5px solid #ffe082; border-radius: 6px; padding: 5px 12px;
+            font-family: inherit; font-size: 12px; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 5px;
+            transition: all .2s;
+        }
+        .btn-revert:hover { background: var(--orange-pale); }
+        .btn-revert svg { width: 12px; height: 12px; }
 
         .time-chip { font-family: 'DM Mono', monospace; font-size: 12px; background: var(--green-pale); color: var(--green-main); padding: 3px 8px; border-radius: 6px; }
 
@@ -212,6 +221,14 @@
             <button class="nav-link" onclick="setView('rejected', this)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 Rejected
+            </button>
+            <button class="nav-link" onclick="setView('archived', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8"/><path d="M23 3H1v5h22V3z"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                Archived / Rejected
+            </button>
+            <button class="nav-link" onclick="setView('settings', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07M8.46 8.46a5 5 0 000 7.07"/></svg>
+                Office Hours & Settings
             </button>
 
             <div class="nav-section-title">Monitoring</div>
@@ -351,6 +368,91 @@
             </div>
         </div>
 
+        <!-- ══ ARCHIVED VIEW ══ -->
+        <div class="view" id="view-archived">
+            <div class="table-card">
+                <div class="table-head">
+                    <h2>Archived Students (Rejected)</h2>
+                    <button class="refresh-btn" onclick="loadArchived()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+                        Refresh
+                    </button>
+                </div>
+                <div id="archivedBody"><div class="loading-state"><span class="spinner"></span></div></div>
+            </div>
+        </div>
+
+        <!-- ══ SETTINGS VIEW ══ -->
+        <div class="view" id="view-settings">
+
+            <!-- Manual Toggle Card -->
+            <div class="table-card" style="margin-bottom:20px;">
+                <div class="table-head">
+                    <h2>Manual Attendance Control</h2>
+                    <span id="currentSystemStatus" style="font-size:12px;color:var(--text-muted);">Loading...</span>
+                </div>
+                <div style="padding:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                    <button class="btn-approve" style="padding:10px 20px;font-size:13px;" onclick="toggleAttendance('open')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                        Force Open
+                    </button>
+                    <button class="btn-reject" style="padding:10px 20px;font-size:13px;" onclick="toggleAttendance('close')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        Force Close
+                    </button>
+                    <button class="btn-revert" style="padding:10px 20px;font-size:13px;" onclick="toggleAttendance('auto')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+                        Set to Automatic
+                    </button>
+                    <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">
+                        ⚠️ Sunday is always closed regardless of manual settings.
+                    </span>
+                </div>
+            </div>
+
+            <!-- Office Hours Form -->
+            <div class="table-card">
+                <div class="table-head">
+                    <h2>Office Hours Configuration</h2>
+                </div>
+                <div style="padding:24px;max-width:560px;">
+
+                    <div style="margin-bottom:20px;">
+                        <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Work Days</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="workDayPickers">
+                            <!-- Generated by JS -->
+                        </div>
+                        <div style="font-size:11px;color:#e57373;margin-top:6px;">* Sunday is always excluded and cannot be selected.</div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                        <div>
+                            <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Opening Time</div>
+                            <input type="time" id="settingOpen" class="filter-input" style="width:100%;">
+                        </div>
+                        <div>
+                            <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Closing Time</div>
+                            <input type="time" id="settingClose" class="filter-input" style="width:100%;">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:20px;">
+                        <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">
+                            Notice / Note <span style="font-weight:400;text-transform:none;">(shown to students when they click office hours)</span>
+                        </div>
+                        <textarea id="settingNote" rows="3" class="filter-input" style="width:100%;resize:vertical;font-family:inherit;"
+                            placeholder="e.g., Office hours changed as per the directive of the City Government of Caloocan."></textarea>
+                    </div>
+
+                    <button class="btn-approve" style="padding:11px 28px;font-size:14px;" onclick="saveOfficeHours()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+                        Save Office Hours
+                    </button>
+
+                </div>
+            </div>
+        </div>
+
     </div><!-- end content -->
 </div>
 
@@ -365,6 +467,9 @@
             </button>
             <button class="btn-reject" id="modalReject" onclick="rejectFromModal()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Reject
+            </button>
+            <button class="btn-revert" id="modalRevert" onclick="revertFromModal()" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg> Revert to Pending
             </button>
             <button class="btn-view" onclick="closeModal()" style="margin-left:auto">Close</button>
         </div>
@@ -383,7 +488,8 @@ let modalRecord      = null;
 const viewTitles = {
     overview:'Overview', pending:'Pending Approvals',
     all:'All Registrations', approved:'Approved',
-    rejected:'Rejected', attendance:'Daily Attendance'
+    rejected:'Rejected', attendance:'Daily Attendance',
+    archived:'Archived / Rejected Students'   // ← add this
 };
 
 function setView(view, btn) {
@@ -401,6 +507,12 @@ function setView(view, btn) {
     } else if (view === 'attendance') {
         document.getElementById('view-attendance').classList.add('active');
         loadAttendance();
+    } else if (view === 'archived') {
+        document.getElementById('view-archived').classList.add('active');
+        loadArchived();
+    } else if (view === 'settings') {
+        document.getElementById('view-settings').classList.add('active');
+        loadSettingsView();
     } else {
         document.getElementById('view-overview').classList.add('active');
         loadOverview();
@@ -424,6 +536,105 @@ async function loadOverview() {
         renderTodayTable(att);
     } catch(e) {
         document.getElementById('todayAttendanceBody').innerHTML = '<div class="empty-state"><div>Failed to load.</div></div>';
+    }
+}
+
+async function loadArchived() {
+    document.getElementById('archivedBody').innerHTML = '<div class="loading-state"><span class="spinner"></span></div>';
+    try {
+        const data = await fetch('{{ route("admin.archived") }}').then(r => r.json());
+
+        if (!data.length) {
+            document.getElementById('archivedBody').innerHTML = `
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    No archived students yet.
+                </div>`;
+            return;
+        }
+
+        document.getElementById('archivedBody').innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Student No.</th>
+                        <th>Campus</th>
+                        <th>Course</th>
+                        <th>Reason</th>
+                        <th>Archived On</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.map(r => `
+                        <tr>
+                            <td>
+                                <div class="person-cell">
+                                    <div class="avatar">${initials(r.name)}</div>
+                                    <div>
+                                        <div style="font-weight:600;">${r.name}</div>
+                                        <div style="font-size:11px;color:var(--text-muted);">${r.email ?? '—'}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge ${r.role}">${r.role}</span></td>
+                            <td><code style="font-family:'DM Mono',monospace;font-size:12px;">${r.student_number}</code></td>
+                            <td style="font-size:12px;">${r.campus ?? '—'}</td>
+                            <td style="font-size:12px;">${r.course ?? '—'}</td>
+                            <td><span class="badge rejected">${r.reason}</span></td>
+                            <td style="font-size:11px;color:var(--text-muted);">${fmtDate(r.created_at)}</td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="btn-approve" onclick="restoreArchived(${r.id},'approved')" title="Approve directly">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
+                                        Approve
+                                    </button>
+                                    <button class="btn-revert" onclick="restoreArchived(${r.id},'pending')" title="Move back to pending">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+                                        Revert to Pending
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+    } catch(e) {
+        document.getElementById('archivedBody').innerHTML = '<div class="empty-state"><div>Failed to load archived students.</div></div>';
+    }
+}
+
+async function restoreArchived(id, action) {
+    const label = action === 'approved' ? 'approve' : 'revert to pending';
+    if (!confirm(`Are you sure you want to ${label} this student?`)) return;
+
+    try {
+        const res  = await fetch(`/admin/archived/${id}/restore`, {
+            method : 'PATCH',
+            headers: {
+                'Content-Type' : 'application/json',
+                'Accept'       : 'application/json',
+                'X-CSRF-TOKEN' : '{{ csrf_token() }}',
+            },
+            body: JSON.stringify({ action }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            showToast(
+                action === 'approved'
+                    ? '✅ Student approved and un-archived!'
+                    : '🔄 Student reverted to pending review!'
+            );
+            loadArchived();          // refresh archived list
+            allRegistrations = [];   // force registrations to reload next visit
+        } else {
+            showToast(data.message ?? 'Action failed.', true);
+        }
+    } catch(e) {
+        showToast('Network error. Please try again.', true);
     }
 }
 
@@ -511,17 +722,127 @@ function renderRegistrations() {
                         <div class="action-btns">
                             <button class="btn-view" onclick='openModal(${JSON.stringify(r)})'>View</button>
                             ${r.status === 'pending' ? `
-                            <button class="btn-approve" onclick="updateStatus(${r.id},'approved')">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                            </button>
-                            <button class="btn-reject" onclick="updateStatus(${r.id},'rejected')">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                            </button>` : ''}
+                                <button class="btn-approve" onclick="updateStatus(${r.id},'approved')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                </button>
+                                <button class="btn-reject" onclick="updateStatus(${r.id},'rejected')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                            ` : ''}
+                            ${r.status === 'rejected' ? `
+                                <button class="btn-approve" onclick="updateStatus(${r.id},'approved')" title="Approve directly">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                </button>
+                                <button class="btn-revert" onclick="updateStatus(${r.id},'pending')" title="Revert to pending">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+                                </button>
+                            ` : ''}
                         </div>
                     </td>
                 </tr>`).join('')}
             </tbody>
         </table>`;
+}
+
+// ── SETTINGS VIEW ───────────────────────────────────────────
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+async function loadSettingsView() {
+    try {
+        const data = await fetch('{{ route("admin.office_hours.get") }}').then(r => r.json());
+        const workDays = JSON.parse(data.work_days || '[1,2,3,4,5]');
+
+        // Render day pickers (skip Sunday = 0)
+        const picker = document.getElementById('workDayPickers');
+        picker.innerHTML = DAY_NAMES.map((name, i) => {
+            if (i === 0) return `<label style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;background:#fff5f5;border:1.5px solid #ffcdd2;color:#e57373;font-size:13px;font-weight:600;opacity:.6;cursor:not-allowed;">
+                <input type="checkbox" disabled> ${name}
+            </label>`;
+            const checked = workDays.includes(i) ? 'checked' : '';
+            return `<label style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:1.5px solid #e0e0e0;font-size:13px;cursor:pointer;transition:all .2s;"
+                        class="day-picker-label" data-day="${i}">
+                <input type="checkbox" value="${i}" ${checked} onchange="updateDayLabel(this)"> ${name}
+            </label>`;
+        }).join('');
+
+        // Style checked labels
+        document.querySelectorAll('.day-picker-label input:checked').forEach(cb => updateDayLabel(cb));
+
+        document.getElementById('settingOpen').value  = data.time_open  ?? '08:00';
+        document.getElementById('settingClose').value = data.time_close ?? '17:00';
+        document.getElementById('settingNote').value  = data.note ?? '';
+
+        // Current status
+        const statusEl = document.getElementById('currentSystemStatus');
+        if (statusEl) {
+            const labels = {
+                '10': '🟠 Manually Closed',
+                '01': '🔵 Manually Opened',
+                '00': 'Running on Schedule'
+            };
+            const key = (data.is_manually_closed ? '1' : '0') + (data.is_manually_open ? '1' : '0');
+            statusEl.textContent = 'Current mode: ' + (labels[key] ?? 'Auto');
+        }
+    } catch(e) {
+        console.error('Failed to load settings', e);
+    }
+}
+
+function updateDayLabel(cb) {
+    const label = cb.closest('label');
+    if (!label) return;
+    if (cb.checked) {
+        label.style.borderColor = 'var(--green-main)';
+        label.style.background  = 'var(--green-pale)';
+        label.style.color       = 'var(--green-main)';
+        label.style.fontWeight  = '700';
+    } else {
+        label.style.borderColor = '#e0e0e0';
+        label.style.background  = 'var(--white)';
+        label.style.color       = 'var(--text-dark)';
+        label.style.fontWeight  = '500';
+    }
+}
+
+async function saveOfficeHours() {
+    const checked  = [...document.querySelectorAll('#workDayPickers input[type=checkbox]:not([disabled]):checked')].map(cb => parseInt(cb.value));
+    const timeOpen = document.getElementById('settingOpen').value;
+    const timeCls  = document.getElementById('settingClose').value;
+    const note     = document.getElementById('settingNote').value.trim();
+
+    if (!checked.length) { showToast('Please select at least one work day.', true); return; }
+    if (!timeOpen || !timeCls) { showToast('Please set opening and closing times.', true); return; }
+    if (timeOpen >= timeCls)   { showToast('Closing time must be after opening time.', true); return; }
+
+    try {
+        const res  = await fetch('{{ route("admin.office_hours.save") }}', {
+            method : 'POST',
+            headers: { 'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}' },
+            body   : JSON.stringify({ work_days: checked, time_open: timeOpen, time_close: timeCls, note }),
+        });
+        const data = await res.json();
+        if (data.success) showToast('✅ Office hours saved successfully!');
+        else showToast(data.message ?? 'Failed to save.', true);
+    } catch(e) {
+        showToast('Network error.', true);
+    }
+}
+
+async function toggleAttendance(action) {
+    const labels = { open:'force open', close:'force close', auto:'set to automatic' };
+    if (!confirm(`Are you sure you want to ${labels[action]} the attendance system?`)) return;
+    try {
+        const res  = await fetch('{{ route("admin.attendance.toggle") }}', {
+            method : 'POST',
+            headers: { 'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}' },
+            body   : JSON.stringify({ action }),
+        });
+        const data = await res.json();
+        if (data.success) { showToast('✅ ' + data.message); loadSettingsView(); }
+        else showToast(data.message ?? 'Failed.', true);
+    } catch(e) {
+        showToast('Network error.', true);
+    }
 }
 
 async function updateStatus(id, status) {
@@ -536,7 +857,11 @@ async function updateStatus(id, status) {
             const rec = allRegistrations.find(r => r.id === id);
             if (rec) rec.status = status;
             updateRegStats(); renderRegistrations();
-            showToast(status === 'approved' ? '✅ Account approved!' : '❌ Registration rejected.');
+            showToast(
+                status === 'approved' ? '✅ Account approved!' :
+                status === 'rejected' ? '❌ Registration rejected.' :
+                '🔄 Reverted to pending review.'
+            );
             closeModal();
         } else showToast(data.message ?? 'Action failed.', true);
     } catch(e) { showToast('Network error.', true); }
@@ -594,13 +919,16 @@ function openModal(r) {
         <div class="modal-row"><span class="lbl">Registered</span><span>${fmtDate(r.created_at)}</span></div>
     `;
     const isPending = r.status === 'pending';
-    document.getElementById('modalApprove').style.display = isPending ? 'flex' : 'none';
-    document.getElementById('modalReject').style.display  = isPending ? 'flex' : 'none';
+    document.getElementById('modalApprove').style.display = (r.status === 'pending' || r.status === 'rejected') ? 'flex' : 'none';
+    document.getElementById('modalReject').style.display  = r.status === 'pending' ? 'flex' : 'none';
+    document.getElementById('modalRevert').style.display  = r.status === 'rejected' ? 'flex' : 'none';
+
     document.getElementById('viewModal').classList.add('open');
 }
 function closeModal()        { document.getElementById('viewModal').classList.remove('open'); }
 function approveFromModal()  { if (modalRecord) updateStatus(modalRecord.id, 'approved'); }
 function rejectFromModal()   { if (modalRecord) updateStatus(modalRecord.id, 'rejected'); }
+function revertFromModal()  { if (modalRecord) updateStatus(modalRecord.id, 'pending'); }
 
 document.getElementById('viewModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
 

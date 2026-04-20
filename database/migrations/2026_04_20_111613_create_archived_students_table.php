@@ -13,20 +13,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('attendances', function (Blueprint $table) {
+        Schema::create('archived_students', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('student_id');
+            $table->unsignedBigInteger('original_student_id');
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->string('student_number');
             $table->string('name');
-            $table->string('course')->nullable();
+            $table->string('email')->nullable();
+            $table->string('phone')->nullable();
             $table->string('campus')->nullable();
-            $table->string('time_in')->nullable();
-            $table->string('time_out')->nullable();
+            $table->string('course')->nullable();
+            $table->string('year_level')->nullable();
+            $table->string('role')->default('student');
+            $table->string('reason')->default('rejected');
             $table->timestamps();
-
-            $table->index(['student_id', 'created_at']);
         });
     }
+
     /**
      * Reverse the migrations.
      *
@@ -34,6 +37,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('attendances');
+        Schema::dropIfExists('archived_students');
     }
 };

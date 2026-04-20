@@ -26,9 +26,18 @@ Route::middleware(['auth'])->group(function () {
 
 // ── SUPER ADMIN (auth + super_admin role) ─────────────────
 Route::prefix('admin')->middleware(['auth'])->group(function () {
-    Route::get('/',                                    [SuperAdminController::class, 'index'])->name('admin.index');
-    Route::get('/registrations',                       [SuperAdminController::class, 'registrations'])->name('admin.registrations');
-    Route::patch('/registrations/{id}/status',         [SuperAdminController::class, 'updateStatus'])->name('admin.registrations.status');
-    Route::get('/attendance',                          [SuperAdminController::class, 'attendanceData'])->name('admin.attendance');
-    Route::get('/stats',                               [SuperAdminController::class, 'stats'])->name('admin.stats');
+    Route::get('/',                                [SuperAdminController::class, 'index'])->name('admin.index');
+    Route::get('/registrations',                   [SuperAdminController::class, 'registrations'])->name('admin.registrations');
+    Route::patch('/registrations/{id}/status',     [SuperAdminController::class, 'updateStatus'])->name('admin.registrations.status');
+    Route::get('/attendance',                      [SuperAdminController::class, 'attendanceData'])->name('admin.attendance');
+    Route::get('/stats',                           [SuperAdminController::class, 'stats'])->name('admin.stats');
+    Route::get('/archived',                        [SuperAdminController::class, 'archived'])->name('admin.archived');
+    Route::patch('/archived/{id}/restore',         [SuperAdminController::class, 'restoreArchived'])->name('admin.archived.restore'); // ← NEW
+    // Inside the admin middleware group
+    Route::get('/settings/office-hours',    [SuperAdminController::class, 'getOfficeHours'])->name('admin.office_hours.get');
+    Route::post('/settings/office-hours',   [SuperAdminController::class, 'saveOfficeHours'])->name('admin.office_hours.save');
+    Route::post('/settings/attendance/toggle', [SuperAdminController::class, 'toggleAttendance'])->name('admin.attendance.toggle');
+
+    // Public route — realtime page needs to fetch settings
+    Route::get('/office-hours', [AttendanceController::class, 'officeHours'])->name('office_hours.public');
 });
