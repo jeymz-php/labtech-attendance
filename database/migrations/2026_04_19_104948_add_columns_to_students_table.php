@@ -14,10 +14,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('students', function (Blueprint $table) {
-            $table->string('phone')->nullable()->after('name');
-            $table->string('campus')->nullable()->after('phone');
-            $table->string('status')->default('pending')->after('year_level');
-            $table->unsignedBigInteger('user_id')->nullable()->after('status');
+            if (!Schema::hasColumn('students', 'phone')) {
+                $table->string('phone')->nullable()->after('name');
+            }
+            if (!Schema::hasColumn('students', 'campus')) {
+                $table->string('campus')->nullable()->after('phone');
+            }
+            if (!Schema::hasColumn('students', 'status')) {
+                $table->string('status')->default('pending')->after('year_level');
+            }
+            if (!Schema::hasColumn('students', 'user_id')) {
+                $table->unsignedBigInteger('user_id')->nullable()->after('status');
+            }
         });
     }
 

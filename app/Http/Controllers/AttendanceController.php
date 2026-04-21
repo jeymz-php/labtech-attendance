@@ -48,13 +48,25 @@ class AttendanceController extends Controller
             ], 403);
         }
 
-        // ── REJECTED ───────────────────────────────────────
+        // ── REJECTED ───────────────────────────────────────────
         if ($student->status === 'rejected') {
             return response()->json([
                 'status'  => 'rejected',
                 'message' => 'Your registration has been rejected. Please approach the Administrator or Team Leader for assistance.',
                 'name'    => $student->name,
             ], 403);
+        }
+
+        // ── DEACTIVATED ────────────────────────────────────────  ← ADD FROM HERE
+        if (isset($student->user_id)) {
+            $userRecord = DB::table('users')->where('id', $student->user_id)->first();
+            if ($userRecord && $userRecord->status === 'approved' && !$userRecord->is_active) {
+                return response()->json([
+                    'status'  => 'deactivated',
+                    'message' => 'Your account has been deactivated. Please approach the Administrator or Team Leader.',
+                    'name'    => $student->name,
+                ], 403);
+            }
         }
 
         // ── CHECK SYSTEM STATUS ────────────────────────────────────

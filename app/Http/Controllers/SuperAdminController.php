@@ -50,9 +50,11 @@ class SuperAdminController extends Controller
         ]);
 
         if ($student->user_id) {
-            DB::table('users')->where('id', $student->user_id)->update([
-                'status' => $request->status,
-            ]);
+            $userUpdate = ['status' => $request->status];
+            if ($request->status === 'approved') {
+                $userUpdate['is_active'] = true;  // ← add this
+            }
+            DB::table('users')->where('id', $student->user_id)->update($userUpdate);
         }
 
         // ── REJECTED → archive ─────────────────────────────
@@ -209,6 +211,37 @@ class SuperAdminController extends Controller
         };
 
         return response()->json(['success' => true, 'message' => $label]);
+    }
+
+    public function toggleActive(Request $request, $id)
+    {
+        $request->validate(['is_active' => 'required|boolean']);
+
+        // $id here is the STUDENT id, so find the user_id from students table
+        $student = DB::table('students')->where('id', $id)->first();
+
+        if (!$student || !$student->user_id) {
+            return response()->json(['success' => false, 'message' => 'User not found.'], 404);
+        }
+
+        $user = DB::table('users')->where('id', $student->user_id)->first();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found.'], 404);
+        }
+
+        // Prevent deactivating super_admin
+        if ($user->role === 'super_admin') {
+            return response()->json(['success' => false, 'message' => 'Cannot deactivate a Super Admin account.'], 403);
+        }
+
+        DB::table('users')->where('id', $student->user_id)->update([
+            'is_active'  => $request->is_active,
+            'updated_at' => now(),
+        ]);
+
+        $label = $request->is_active ? 'activated' : 'deactivated';
+        return response()->json(['success' => true, 'message' => "Account {$label} successfully."]);
     }
 
     public function stats()

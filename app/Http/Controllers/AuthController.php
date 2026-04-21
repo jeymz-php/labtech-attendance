@@ -78,12 +78,13 @@ class AuthController extends Controller
         ]);
 
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => bcrypt($request->password),
-            'phone'    => $request->phone,
-            'role'     => $request->role,
-            'status'   => 'pending',
+            'name'      => $request->name,
+            'email'     => $request->email,
+            'password'  => bcrypt($request->password),
+            'phone'     => $request->phone,
+            'role'      => $request->role,
+            'status'    => 'pending',
+            'is_active' => true,   // ← add this
         ]);
 
         DB::table('students')->insert([
