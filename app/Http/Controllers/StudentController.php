@@ -75,6 +75,60 @@ class StudentController extends Controller
         return response()->json(['success' => true, 'message' => 'Profile picture removed.']);
     }
 
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name'  => 'required|string|max:100',
+            'phone' => 'required|string|max:15',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+        ]);
+
+        DB::table('users')->where('id', $user->id)->update([
+            'name'       => $request->name,
+            'phone'      => $request->phone,
+            'email'      => $request->email,
+            'updated_at' => now(),
+        ]);
+
+        // Update name in students table too
+        $student = DB::table('students')->where('user_id', $user->id)->first();
+        if ($student) {
+            DB::table('students')->where('user_id', $user->id)->update([
+                'name'       => $request->name,
+                'phone'      => $request->phone,
+                'updated_at' => now(),
+            ]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Profile updated successfully.']);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'password'         => 'required|min:8|confirmed',
+        ]);
+
+        $user = Auth::user();
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Current password is incorrect.',
+            ], 422);
+        }
+
+        DB::table('users')->where('id', $user->id)->update([
+            'password'   => bcrypt($request->password),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Password changed successfully.']);
+    }
+
     public function exportPdf(Request $request)
     {
         $user    = Auth::user();

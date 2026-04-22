@@ -231,21 +231,26 @@
     </div>
 
     @auth
-    <div class="hero-nav">
-        <a href="{{ auth()->user()->role === 'super_admin' ? route('admin.index') : route('student.dashboard') }}">
-            {{ auth()->user()->role === 'super_admin' ? '⚙️ Admin Panel' : '📋 My Dashboard' }}
-        </a>
-    </div>
+        @if(auth()->user()->role === 'super_admin')
+            {{-- Super admin sees NOTHING on the public page --}}
+            {{-- They access admin panel via 5-click logo only --}}
+        @else
+            {{-- Staff/Student sees their dashboard button --}}
+            <div class="hero-nav">
+                <a href="{{ route('student.dashboard') }}">📋 My Dashboard</a>
+            </div>
+        @endif
     @else
-    <div class="hero-nav">
-        <a href="{{ route('login') }}">Sign In</a>
-    </div>
+        {{-- Public sees Sign In button --}}
+        <div class="hero-nav">
+            <a href="{{ route('login') }}">Sign In</a>
+        </div>
     @endauth
 
     <div class="hero-body">
-        <div class="school-logo">
+        <div class="school-logo" id="secretLogo" style="cursor:default;">
             <img src="{{ asset('images/UCC_Logo.png') }}" alt="UCC Logo"
-                 onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\'font-weight:700;font-size:18px;color:#2e7d32;\'>UCC</span>'">
+                onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\'font-weight:700;font-size:18px;color:#2e7d32;\'>UCC</span>'">
         </div>
         <h1>UCC LabTech</h1>
         <p class="subtitle">Real-Time Attendance Monitoring System</p>
@@ -592,6 +597,38 @@ async function verifyStudent() {
 }
 
 document.getElementById('studentInput').addEventListener('keydown', e => { if (e.key === 'Enter') verifyStudent(); });
+
+// ── SECRET 5-CLICK ON LOGO ─────────────────────────────────
+(function() {
+    const logo     = document.getElementById('secretLogo');
+    let clickCount = 0;
+    let timer      = null;
+
+    logo.addEventListener('click', function() {
+        clickCount++;
+
+        clearTimeout(timer);
+        timer = setTimeout(() => { clickCount = 0; }, 3000);
+
+        if (clickCount === 5) {
+            clickCount = 0;
+            clearTimeout(timer);
+
+            @auth
+                @if(auth()->user()->role === 'super_admin')
+                    // Already logged in as super admin → go directly to admin panel
+                    window.location.href = '{{ route("admin.index") }}';
+                @else
+                    // Staff → go to their dashboard
+                    window.location.href = '{{ route("student.dashboard") }}';
+                @endif
+            @else
+                // Not logged in → go to hidden admin login
+                window.location.href = '{{ route("admin.login") }}';
+            @endauth
+        }
+    });
+})();
 
 // ── RECENT ACTIVITY ────────────────────────────────────────
 function initials(name) { return (name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }

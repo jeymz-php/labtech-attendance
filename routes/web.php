@@ -42,3 +42,14 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     Route::post('/settings/attendance/toggle',         [SuperAdminController::class, 'toggleAttendance'])->name('admin.attendance.toggle');
     Route::patch('/users/{id}/toggle-active',          [SuperAdminController::class, 'toggleActive'])->name('admin.users.toggle_active');
 });
+
+// Hidden admin login
+Route::get('/auth/admin-login',  [AuthController::class, 'showAdminLogin'])->name('admin.login');
+Route::post('/auth/admin-login', [AuthController::class, 'adminLogin'])->name('admin.login.post');
+
+// Inside the admin middleware group
+Route::patch('/users/{id}/change-password', [SuperAdminController::class, 'changePassword'])->name('admin.users.change_password');
+
+// Inside the auth middleware group (student/staff)
+Route::patch('/profile/update',   [StudentController::class, 'updateProfile'])->name('profile.update');
+Route::patch('/profile/password', [StudentController::class, 'changePassword'])->name('profile.password');

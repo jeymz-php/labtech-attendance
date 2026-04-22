@@ -451,6 +451,9 @@
         .toast.show  { transform: translateY(0); opacity: 1; }
         .toast.error { background: var(--red); }
 
+        .alert.error   { background: var(--red-pale);   border: 1px solid #ffcdd2; color: var(--red);    display: block; }
+        .alert.success { background: var(--green-pale);  border: 1px solid var(--green-border); color: var(--green-main); display: block; }
+
         /* ════════════════════════════════════════
            RESPONSIVE
         ════════════════════════════════════════ */
@@ -529,7 +532,7 @@
             </button>
 
             <div class="nav-section-title">System</div>
-            <a class="nav-link" href="{{ route('home') }}">
+            <a class="nav-link" href="{{ route('home') }}" target="_blank" rel="noopener">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
                 Attendance Page
             </a>
@@ -819,6 +822,48 @@
                     Activate
                 </button>
                 <button class="btn-view" onclick="closeModal()" style="margin-left:auto;">Close</button>
+                <button class="btn-view" id="modalChangePassword"
+                    style="color:var(--blue);border-color:#90caf9;"
+                    onclick="openChangePasswordFromModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    Change Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-overlay" id="changePasswordModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Change Password — <span id="cpModalName"></span></h3>
+            <button class="modal-close" onclick="closeChangePasswordModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="alert" id="cpAlert" style="padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;"></div>
+
+            <div style="margin-bottom:14px;">
+                <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">New Password</div>
+                <input type="password" id="cpNewPassword" class="filter-input" style="width:100%;" placeholder="Enter new password (min. 8 characters)">
+            </div>
+            <div style="margin-bottom:20px;">
+                <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Confirm New Password</div>
+                <input type="password" id="cpConfirmPassword" class="filter-input" style="width:100%;" placeholder="Re-enter new password">
+            </div>
+
+            <div style="font-size:12px;color:var(--text-muted);background:#fafafa;border-radius:8px;padding:10px 12px;margin-bottom:16px;">
+                ⚠️ The staff member will need to use this new password on their next login.
+            </div>
+
+            <div class="modal-btns">
+                <button class="btn-approve" id="cpSubmitBtn" onclick="submitChangePassword()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
+                    Change Password
+                </button>
+                <button class="btn-view" onclick="closeChangePasswordModal()" style="margin-left:auto;">Cancel</button>
             </div>
         </div>
     </div>
@@ -1047,6 +1092,10 @@ function renderRegistrations() {
                         <td>
                             <div class="action-btns">
                                 <button class="btn-view" onclick='openModal(${JSON.stringify(r).replace(/'/g,"&#39;")})'>View</button>
+                                <button class="btn-view" onclick='openChangePasswordModal(${r.id}, "${r.name.replace(/"/g,"&quot;")}")' title="Change Password" style="color:var(--blue);border-color:#90caf9;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                                    Password
+                                </button>
 
                                 ${r.status === 'pending' ? `
                                     <button class="btn-approve" onclick="updateStatus(${r.id},'approved')" title="Approve">
@@ -1286,6 +1335,89 @@ async function restoreArchived(id, action) {
     }
 }
 
+// ── CHANGE PASSWORD (ADMIN) ──────────────────────────────────
+let cpStudentId = null;
+
+function openChangePasswordModal(studentId, name) {
+    cpStudentId = studentId;
+    document.getElementById('cpModalName').textContent  = name;
+    document.getElementById('cpNewPassword').value      = '';
+    document.getElementById('cpConfirmPassword').value  = '';
+    document.getElementById('cpAlert').className        = 'alert';
+    document.getElementById('changePasswordModal').classList.add('open');
+}
+
+function openChangePasswordFromModal() {
+    if (!modalRecord) return;
+    closeModal();
+    openChangePasswordModal(modalRecord.id, modalRecord.name);
+}
+
+function closeChangePasswordModal() {
+    document.getElementById('changePasswordModal').classList.remove('open');
+    cpStudentId = null;
+}
+
+async function submitChangePassword() {
+    const pw  = document.getElementById('cpNewPassword').value;
+    const cpw = document.getElementById('cpConfirmPassword').value;
+    const btn = document.getElementById('cpSubmitBtn');
+    const alertEl = document.getElementById('cpAlert');
+
+    alertEl.className = 'alert';
+
+    if (pw.length < 8) {
+        alertEl.textContent = 'Password must be at least 8 characters.';
+        alertEl.className   = 'alert error';
+        return;
+    }
+    if (pw !== cpw) {
+        alertEl.textContent = 'Passwords do not match.';
+        alertEl.className   = 'alert error';
+        return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = 'Changing...';
+
+    try {
+        const res  = await fetch(`/admin/users/${cpStudentId}/change-password`, {
+            method : 'PATCH',
+            headers: {
+                'Content-Type':'application/json',
+                'Accept':'application/json',
+                'X-CSRF-TOKEN':'{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                password:              pw,
+                password_confirmation: cpw,
+            }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            alertEl.textContent = '✅ ' + data.message;
+            alertEl.className   = 'alert success';
+            setTimeout(() => closeChangePasswordModal(), 1800);
+            showToast('✅ Password changed successfully!');
+        } else {
+            alertEl.textContent = data.message ?? 'Failed to change password.';
+            alertEl.className   = 'alert error';
+        }
+    } catch(e) {
+        alertEl.textContent = 'Network error. Please try again.';
+        alertEl.className   = 'alert error';
+    }
+
+    btn.disabled    = false;
+    btn.textContent = 'Change Password';
+    // restore icon
+    btn.innerHTML   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg> Change Password`;
+}
+
+document.getElementById('changePasswordModal').addEventListener('click', function(e) {
+    if (e.target === this) closeChangePasswordModal();
+});
+
 // ── MODAL ────────────────────────────────────────────────────
 function openModal(r) {
     modalRecord = r;
@@ -1320,6 +1452,10 @@ function openModal(r) {
     document.getElementById('modalActivate').style.display   = (isApprovable && !r.is_active) ? 'inline-flex' : 'none';
 
     document.getElementById('detailModal').classList.add('open');
+
+    // Add inside openModal() after existing button show/hide logic
+    document.getElementById('modalChangePassword').style.display =
+        r.role !== 'super_admin' ? 'inline-flex' : 'none';
 }
 
 function closeModal() { document.getElementById('detailModal').classList.remove('open'); }

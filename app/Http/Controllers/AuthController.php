@@ -106,11 +106,60 @@ class AuthController extends Controller
         ]);
     }
 
+    public function showAdminLogin()
+    {
+        if (Auth::check() && Auth::user()->role === 'super_admin') {
+            return redirect()->route('admin.index');
+        }
+        return view('auth.admin_login');
+    }
+
+    public function adminLogin(Request $request)
+    {
+        $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (!Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials.',
+            ], 401);
+        }
+
+        $user = Auth::user();
+
+        // Only super_admin allowed here
+        if ($user->role !== 'super_admin') {
+            Auth::logout();
+            return response()->json([
+                'success' => false,
+                'message' => 'Access denied. This portal is for administrators only.',
+            ], 403);
+        }
+
+        if (!$user->is_active) {
+            Auth::logout();
+            return response()->json([
+                'success' => false,
+                'message' => 'This account has been deactivated.',
+            ], 403);
+        }
+
+        $request->session()->regenerate();
+
+        return response()->json([
+            'success'  => true,
+            'redirect' => route('admin.index'),
+        ]);
+    }
+
     public function logout(Request $request)
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('login');
+        return redirect()->route('home'); // ← goes to realtime_attendance
     }
 }

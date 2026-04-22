@@ -244,6 +244,36 @@ class SuperAdminController extends Controller
         return response()->json(['success' => true, 'message' => "Account {$label} successfully."]);
     }
 
+    public function changePassword(Request $request, $id)
+    {
+        $request->validate([
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        // $id is student id, resolve user
+        $student = DB::table('students')->where('id', $id)->first();
+        if (!$student || !$student->user_id) {
+            return response()->json(['success' => false, 'message' => 'User not found.'], 404);
+        }
+
+        $user = DB::table('users')->where('id', $student->user_id)->first();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found.'], 404);
+        }
+
+        // Prevent changing super admin password from here
+        if ($user->role === 'super_admin') {
+            return response()->json(['success' => false, 'message' => 'Cannot change a Super Admin password from here.'], 403);
+        }
+
+        DB::table('users')->where('id', $student->user_id)->update([
+            'password'   => bcrypt($request->password),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Password changed successfully.']);
+    }
+
     public function stats()
     {
         $today = Carbon::today()->toDateString();
